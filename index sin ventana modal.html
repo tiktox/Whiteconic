@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="es">
+    <div id="map-bg"></div>
+<head>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nightcony - Plataforma Inmobiliaria</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        #map-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh; /* O el alto que desees */
+            z-index: 0; /* Debe estar detrás del header */
+            }
+
+            header {
+            position: relative;
+            z-index: 100; /* Por encima del mapa */
+            /* otros estilos del header */
+            }
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #166088;
+            --text-color: #333;
+            --bg-color: #f8f9fa;
+            --header-bg: #ffffff;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --border-radius: 12px;
+            --hover-color: #e9ecef;
+        }
+
+        .dark-mode {
+            --primary-color: #6d8cc0;
+            --secondary-color: #4a90e2;
+            --text-color: #f8f9fa;
+            --bg-color: #121212;
+            --header-bg: #1e1e1e;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            --hover-color: #2d2d2d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+        }
+
+        header {
+            background-color: var(--header-bg);
+            padding: 15px 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .logo img {
+            height: 40px;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background-color: var(--hover-color);
+            border-radius: 20px;
+            padding: 8px 15px;
+            width: 40%;
+            min-width: 300px;
+        }
+
+        .search-bar input {
+            background: transparent;
+            border: none;
+            outline: none;
+            width: 100%;
+            color: var(--text-color);
+            padding: 5px 10px;
+            font-size: 0.9rem;
+        }
+
+        .search-bar i {
+            color: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .nav-item {
+            position: relative;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+
+        .nav-item:hover {
+            background-color: var(--hover-color);
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: var(--header-bg);
+            min-width: 200px;
+            box-shadow: var(--shadow);
+            border-radius: var(--border-radius);
+            z-index: 1;
+            top: 100%;
+            left: 0;
+            padding: 10px 0;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 10px 20px;
+            color: var(--text-color);
+            text-decoration: none;
+            display: block;
+        }
+
+        .dropdown-item:hover {
+            background-color: var(--hover-color);
+            border-radius: 4px;
+        }
+
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            background-color: var(--hover-color);
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .add-property {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .add-property:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .search-bar {
+                width: 100%;
+            }
+
+            .nav-links {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" onclick="window.location.href='#'">
+            <svg xmlns="http://www.w3.org/2000/svg" height="40" viewBox="0 0 24 24" width="40" fill="var(--primary-color)">
+                <path d="M12 2L1 12h3v9h6v-6h4v6h6v-9h3L12 2zm0 2.8L18 10v9h-2v-6H8v6H6v-9l6-7.2z"/>
+            </svg>
+            <h1>Nightcony</h1>
+        </div>
+
+        <div class="search-bar">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Buscar propiedades por ciudad, tipo o palabra clave..." id="searchInput">
+        </div>
+
+        <div class="nav-links">
+            <div class="dropdown nav-item">
+                <span>Nosotros <i class="fas fa-chevron-down"></i></span>
+                <div class="dropdown-content">
+                    <a href="#" class="dropdown-item">Misión</a>
+                    <a href="#" class="dropdown-item">Visión</a>
+                    <a href="#" class="dropdown-item">Valores</a>
+                    <a href="#" class="dropdown-item">Servicios</a>
+                    <a href="#" class="dropdown-item">FAQ</a>
+                </div>
+            </div>
+
+            <div class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
+            </div>
+
+            <button class="add-property" id="addPropertyBtn">
+                <i class="fas fa-plus"></i> Nueva Propiedad
+            </button>
+        </div>
+    </header>
+
+    <script>
+        // Toggle tema claro/oscuro
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        
+        // Verificar preferencia del sistema o localStorage
+        const savedTheme = localStorage.getItem('theme') || 
+                           (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        
+        if (savedTheme === 'dark') {
+            body.classList.add('dark-mode');
+            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        }
+        
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            
+            if (body.classList.contains('dark-mode')) {
+                localStorage.setItem('theme', 'dark');
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            } else {
+                localStorage.setItem('theme', 'light');
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            }
+        });
+        
+        // Simular búsqueda
+        const searchInput = document.getElementById('searchInput');
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                alert(`Buscando: ${searchInput.value}`);
+                // Aquí iría la lógica de búsqueda real
+            }
+        });
+        
+        // Botón de nueva propiedad
+        // Botón de nueva propiedad
+        const addPropertyBtn = document.getElementById('addPropertyBtn');
+        addPropertyBtn.addEventListener('click', () => {
+            document.getElementById('propertyModal').style.display = 'block';
+        });
+                    // Aquí iría la lógica para abrir el formulario
+                    document.addEventListener('DOMContentLoaded', function() {
+        var map = L.map('map-bg', {
+            zoomControl: false,  // Oculta controles innecesarios
+            attributionControl: false
+        }).setView([18.7357, -70.1627], 8); // Coordenadas y zoom inicial, ajusta a tu zona
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19
+        }).addTo(map);
+        });
+        </script>
+        <script>
+        // Suponiendo que tienes un array con publicaciones
+        const propiedades = [
+          {
+            id: 1,
+            title: "Casa en Santo Domingo",
+            price: "RD$ 2,500,000",
+            lat: 18.4861,
+            lng: -69.9312,
+            image: "https://i.pinimg.com/736x/51/f5/b8/51f5b8e56d9f70fe3929ca9bc8dd885e.jpg",
+            type: "venta",
+            verified: true
+          },
+          // Más propiedades...
+        ];
+      
+        // Inicializar el mapa
+        const map = L.map('map-bg', {
+          zoomControl: false,
+          attributionControl: false
+        }).setView([18.4861, -69.9312], 10);
+      
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19
+        }).addTo(map);
+      
+        // Agregar marcadores
+        propiedades.forEach(prop => {
+          const marker = L.marker([prop.lat, prop.lng], {
+            icon: L.icon({
+              iconUrl: prop.verified ? 'icon_verified.png' : 'icon_default.png',
+              iconSize: [30, 40]
+            })
+          }).addTo(map);
+          
+          marker.bindPopup(`
+            <div style="text-align: center;">
+              <img src="${prop.image}" alt="${prop.title}" style="width: 100%; max-width: 200px; border-radius: 8px;">
+              <h4>${prop.title}</h4>
+              <p><strong>${prop.price}</strong></p>
+              <button onclick="verDetalles(${prop.id})">Ver más</button>
+            </div>
+          `);
+        });
+      
+        function verDetalles(propId) {
+          // Aquí redirigir a la página de detalles o abrir otro modal con la información completa
+          alert("Abriendo detalles de la propiedad " + propId);
+        }
+      </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+index modificado
+
+
+<!DOCTYPE html>
+<html lang="es">
+    <div id="map-bg"></div>
+<head>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nightcony - Plataforma Inmobiliaria</title>
+    <style>
+        #map-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: 0;
+        }
+
+        /* Estilos para el modal de propiedades */
+        .property-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 50px auto;
+            padding: 20px;
+            width: 80%;
+            max-width: 900px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            color: #4a6fa5;
+        }
+
+        .close-modal {
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .property-gallery {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .property-gallery img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .property-video {
+            width: 100%;
+            height: 400px;
+            margin-bottom: 20px;
+        }
+
+        .property-details {
+            margin-bottom: 20px;
+        }
+
+        .property-price {
+            font-size: 1.8rem;
+            color: #166088;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .property-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Resto de tus estilos existentes */
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #166088;
+            --text-color: #333;
+            --bg-color: #f8f9fa;
+            --header-bg: #ffffff;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --border-radius: 12px;
+            --hover-color: #e9ecef;
+        }
+
+        .dark-mode {
+            --primary-color: #6d8cc0;
+            --secondary-color: #4a90e2;
+            --text-color: #f8f9fa;
+            --bg-color: #121212;
+            --header-bg: #1e1e1e;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            --hover-color: #2d2d2d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+        }
+
+        header {
+            position: relative;
+            z-index: 100;
+            background-color: var(--header-bg);
+            padding: 15px 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .logo img {
+            height: 40px;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background-color: var(--hover-color);
+            border-radius: 20px;
+            padding: 8px 15px;
+            width: 40%;
+            min-width: 300px;
+        }
+
+        .search-bar input {
+            background: transparent;
+            border: none;
+            outline: none;
+            width: 100%;
+            color: var(--text-color);
+            padding: 5px 10px;
+            font-size: 0.9rem;
+        }
+
+        .search-bar i {
+            color: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .nav-item {
+            position: relative;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+
+        .nav-item:hover {
+            background-color: var(--hover-color);
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: var(--header-bg);
+            min-width: 200px;
+            box-shadow: var(--shadow);
+            border-radius: var(--border-radius);
+            z-index: 1;
+            top: 100%;
+            left: 0;
+            padding: 10px 0;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 10px 20px;
+            color: var(--text-color);
+            text-decoration: none;
+            display: block;
+        }
+
+        .dropdown-item:hover {
+            background-color: var(--hover-color);
+            border-radius: 4px;
+        }
+
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            background-color: var(--hover-color);
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .add-property {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .add-property:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .search-bar {
+                width: 100%;
+            }
+
+            .nav-links {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 20px auto;
+            }
+            
+            .property-gallery {
+                grid-template-columns: 1fr;
+            }
+            
+            .property-video {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" onclick="window.location.href='#'">
+            <svg xmlns="http://www.w3.org/2000/svg" height="40" viewBox="0 0 24 24" width="40" fill="var(--primary-color)">
+                <path d="M12 2L1 12h3v9h6v-6h4v6h6v-9h3L12 2zm0 2.8L18 10v9h-2v-6H8v6H6v-9l6-7.2z"/>
+            </svg>
+            <h1>Nightcony</h1>
+        </div>
+
+        <div class="search-bar">
+            <i class="fas fa-search" id="searchIcon"></i>
+            <input type="text" placeholder="Buscar propiedades por ciudad, tipo o palabra clave..." id="searchInput">
+            <div id="searchResults" style="display: none;"></div>
+        </div>
+
+        <div class="nav-links">
+            <div class="dropdown nav-item">
+                <span>Nosotros <i class="fas fa-chevron-down"></i></span>
+                <div class="dropdown-content">
+                    <a href="#" class="dropdown-item">Misión</a>
+                    <a href="#" class="dropdown-item">Visión</a>
+                    <a href="#" class="dropdown-item">Valores</a>
+                    <a href="#" class="dropdown-item">Servicios</a>
+                    <a href="#" class="dropdown-item">FAQ</a>
+                </div>
+            </div>
+
+            <div class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
+            </div>
+
+            <button class="add-property" id="addPropertyBtn">
+                <i class="fas fa-plus"></i> Nueva Propiedad
+            </button>
+        </div>
+    </header>
+
+    <!-- Modal para detalles de propiedad -->
+    <div id="propertyModal" class="property-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalPropertyTitle">Casa en Santo Domingo</h2>
+                <span class="close-modal" id="closeModal">&times;</span>
+            </div>
+            
+            <div class="property-gallery" id="propertyGallery">
+                <!-- Las imágenes se cargarán dinámicamente -->
+            </div>
+            
+            <div class="property-video">
+                <video controls width="100%" height="100%" id="propertyVideo">
+                    <source src="" type="video/mp4">
+                    Tu navegador no soporta videos HTML5.
+                </video>
+            </div>
+            
+            <div class="property-details">
+                <div class="property-price" id="modalPropertyPrice">RD$ 2,500,000</div>
+                <div id="modalPropertyDescription">Hermosa casa ubicada en el corazón de Santo Domingo, con amplios espacios y acabados de lujo.</div>
+                
+                <div class="property-features">
+                    <div class="feature"><i class="fas fa-bed"></i> <span id="modalBedrooms">3</span> Habitaciones</div>
+                    <div class="feature"><i class="fas fa-bath"></i> <span id="modalBathrooms">2</span> Baños</div>
+                    <div class="feature"><i class="fas fa-car"></i> <span id="modalParking">1</span> Estacionamiento</div>
+                    <div class="feature"><i class="fas fa-ruler-combined"></i> <span id="modalArea">150</span> m²</div>
+                </div>
+                
+                <div id="modalPropertyLocation"><i class="fas fa-map-marker-alt"></i> Santo Domingo, Distrito Nacional</div>
+                
+                <button id="contactOwner" style="background-color: var(--primary-color); color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-top: 15px;">
+                    Contactar al propietario
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Datos de propiedades de ejemplo
+        const propiedades = [
+            {
+                id: 1,
+                title: "Casa en Santo Domingo",
+                price: "RD$ 2,500,000",
+                description: "Hermosa casa ubicada en el corazón de Santo Domingo, con amplios espacios y acabados de lujo. Ideal para familias que buscan comodidad y elegancia.",
+                lat: 18.4861,
+                lng: -69.9312,
+                images: [
+                    "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+                    "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+                    "https://images.unsplash.com/photo-1493809842364-78817add7ffb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+                    "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
+                ],
+                video: "https://samplelib.com/lib/preview/mp4/sample-5s.mp4",
+                type: "venta",
+                bedrooms: 3,
+                bathrooms: 2,
+                parking: 1,
+                area: 150,
+                location: "Santo Domingo, Distrito Nacional",
+                verified: true
+            },
+            {
+                id: 2,
+                title: "Apartamento en Santiago",
+                price: "RD$ 1,800,000",
+                description: "Moderno apartamento en zona exclusiva de Santiago, con vista panorámica y amenities de primera.",
+                lat: 19.4517,
+                lng: -70.6970,
+                images: [
+                    "https://images.unsplash.com/photo-1484154218962-a197022b5858?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+                    "https://images.unsplash.com/photo-1493809842364-78817add7ffb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+                    "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+                    "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
+                ],
+                video: "https://samplelib.com/lib/preview/mp4/sample-10s.mp4",
+                type: "alquiler",
+                bedrooms: 2,
+                bathrooms: 2,
+                parking: 1,
+                area: 110,
+                location: "Santiago, República Dominicana",
+                verified: true
+            },
+            {
+                id: 3,
+                title: "Villa en Punta Cana",
+                price: "US$ 350,000",
+                description: "Exclusiva villa frente al mar en Punta Cana, con acceso privado a la playa y piscina infinita.",
+                lat: 18.5601,
+                lng: -68.3725,
+                images: [
+                    "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+                    "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+                    "https://images.unsplash.com/photo-1493809842364-78817add7ffb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+                    "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
+                ],
+                video: "https://samplelib.com/lib/preview/mp4/sample-15s.mp4",
+                type: "venta",
+                bedrooms: 4,
+                bathrooms: 3,
+                parking: 2,
+                area: 220,
+                location: "Punta Cana, República Dominicana",
+                verified: false
+            }
+        ];
+
+        // Icono personalizado para los marcadores
+        const propertyIcon = L.icon({
+            iconUrl: 'https://github.com/tiktox/xmchat/blob/main/dcc085fd831f0d82bc0b755d8b59bb07-removebg-preview.png?raw=true',
+            iconSize: [30, 40],
+            iconAnchor: [15, 40],
+            popupAnchor: [0, -40]
+        });
+
+        // Inicializar el mapa
+        const map = L.map('map-bg', {
+            zoomControl: false,
+            attributionControl: false
+        }).setView([18.7357, -70.1627], 8);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19
+        }).addTo(map);
+
+        // Agregar marcadores para cada propiedad
+        propiedades.forEach(prop => {
+            const marker = L.marker([prop.lat, prop.lng], {
+                icon: propertyIcon
+            }).addTo(map);
+            
+            marker.bindPopup(`
+                <div style="text-align: center;">
+                    <img src="${prop.images[0]}" alt="${prop.title}" style="width: 100%; max-width: 200px; border-radius: 8px;">
+                    <h4>${prop.title}</h4>
+                    <p><strong>${prop.price}</strong></p>
+                    <button onclick="showPropertyDetails(${prop.id})" style="background-color: #4a6fa5; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                        Ver más
+                    </button>
+                </div>
+            `);
+        });
+
+        // Función para mostrar los detalles de la propiedad en el modal
+        function showPropertyDetails(propId) {
+            const property = propiedades.find(p => p.id === propId);
+            if (!property) return;
+            
+            // Actualizar el modal con los datos de la propiedad
+            document.getElementById('modalPropertyTitle').textContent = property.title;
+            document.getElementById('modalPropertyPrice').textContent = property.price;
+            document.getElementById('modalPropertyDescription').textContent = property.description;
+            document.getElementById('modalBedrooms').textContent = property.bedrooms;
+            document.getElementById('modalBathrooms').textContent = property.bathrooms;
+            document.getElementById('modalParking').textContent = property.parking;
+            document.getElementById('modalArea').textContent = property.area;
+            document.getElementById('modalPropertyLocation').innerHTML = `<i class="fas fa-map-marker-alt"></i> ${property.location}`;
+            
+            // Cargar imágenes en la galería
+            const gallery = document.getElementById('propertyGallery');
+            gallery.innerHTML = '';
+            property.images.forEach(img => {
+                const imgElement = document.createElement('img');
+                imgElement.src = img;
+                imgElement.alt = property.title;
+                gallery.appendChild(imgElement);
+            });
+            
+            // Cargar video
+            const videoElement = document.getElementById('propertyVideo');
+            videoElement.querySelector('source').src = property.video;
+            videoElement.load();
+            
+            // Mostrar el modal
+            document.getElementById('propertyModal').style.display = 'block';
+        }
+
+        // Cerrar el modal
+        document.getElementById('closeModal').addEventListener('click', function() {
+            document.getElementById('propertyModal').style.display = 'none';
+        });
+
+        // Cerrar el modal al hacer clic fuera del contenido
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('propertyModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+
+        // Función de búsqueda
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            if (searchTerm.length < 3) {
+                document.getElementById('searchResults').style.display = 'none';
+                return;
+            }
+            
+            const results = propiedades.filter(prop => 
+                prop.title.toLowerCase().includes(searchTerm) || 
+                prop.location.toLowerCase().includes(searchTerm) ||
+                prop.type.toLowerCase().includes(searchTerm) ||
+                prop.description.toLowerCase().includes(searchTerm)
+            );
+            
+            const resultsContainer = document.getElementById('searchResults');
+            resultsContainer.innerHTML = '';
+            
+            if (results.length > 0) {
+                results.forEach(prop => {
+                    const resultItem = document.createElement('div');
+                    resultItem.style.padding = '10px';
+                    resultItem.style.borderBottom = '1px solid #eee';
+                    resultItem.style.cursor = 'pointer';
+                    resultItem.innerHTML = `
+                        <h4>${prop.title}</h4>
+                        <p>${prop.price} - ${prop.location}</p>
+                    `;
+                    resultItem.addEventListener('click', function() {
+                        showPropertyDetails(prop.id);
+                        resultsContainer.style.display = 'none';
+                    });
+                    resultsContainer.appendChild(resultItem);
+                });
+                resultsContainer.style.display = 'block';
+            } else {
+                resultsContainer.innerHTML = '<div style="padding: 10px;">No se encontraron resultados</div>';
+                resultsContainer.style.display = 'block';
+            }
+        });
+
+        // Cerrar resultados de búsqueda al hacer clic fuera
+        document.addEventListener('click', function(e) {
+            if (e.target.id !== 'searchInput' && e.target.id !== 'searchIcon') {
+                document.getElementById('searchResults').style.display = 'none';
+            }
+        });
+
+        // Toggle tema claro/oscuro
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        
+        // Verificar preferencia del sistema o localStorage
+        const savedTheme = localStorage.getItem('theme') || 
+                         (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        
+        if (savedTheme === 'dark') {
+            body.classList.add('dark-mode');
+            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        }
+        
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            
+            if (body.classList.contains('dark-mode')) {
+                localStorage.setItem('theme', 'dark');
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            } else {
+                localStorage.setItem('theme', 'light');
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            }
+        });
+        
+        // Botón de nueva propiedad
+        document.getElementById('addPropertyBtn').addEventListener('click', function() {
+            alert('Funcionalidad para agregar nueva propiedad se implementará próximamente');
+        });
+    </script>
+</body>
+</html>
