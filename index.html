@@ -330,17 +330,21 @@
     position: relative;
     z-index: 100; /* Asegura que la barra de búsqueda esté sobre los resultados */
 }
+        .logo img {
+    height: 40px; /* Mantiene el tamaño consistente */
+    width: auto;  /* Mantiene la proporción */
+    margin-right: 10px; /* Espacio entre el logo y el texto */
+    object-fit: contain; /* Asegura que la imagen se muestre completa */
+}
     </style>
 </head>
 <body>
     <header>
         
-        <div class="logo" onclick="window.location.href='#'">
-            <svg xmlns="http://www.w3.org/2000/svg" height="40" viewBox="0 0 24 24" width="40" fill="var(--primary-color)">
-                <path d="M12 2L1 12h3v9h6v-6h4v6h6v-9h3L12 2zm0 2.8L18 10v9h-2v-6H8v6H6v-9l6-7.2z"/>
-            </svg>
-            <h1>Nightcony</h1>
-        </div>
+      <div class="logo" onclick="window.location.href='#'">
+    <img src="https://github.com/tiktox/nightcony/blob/main/original_total-removebg-preview.png?raw=true" alt="Nightcony Logo" height="40">
+    <h1>Nightcony</h1>
+</div>
 
         <div class="search-bar-container">
             <div class="search-bar">
